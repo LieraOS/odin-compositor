@@ -674,6 +674,15 @@
 ## Protokolle und Desktop
 
 - DMABUF-Screencopy-Pfad (SHM-Capture existiert)
+- Protokoll-Lücken für volle Abdeckung (Audit 2025):
+  Adaptive-Sync/VRR wird in der zwlr_output_manager-
+  Validierung abgelehnt — es gibt gar keinen VRR-Pfad,
+  relevant für Gaming-Lasten; wp_fifo_v1 +
+  wp_commit_timing_v1 (Frame-Pacing, neuere Clients fragen
+  es an); ext_transient_seat_v1 (Nested-/VM-Sessions);
+  wp_color_manager_v1 (HDR — Roadmap-Klasse);
+  drm_lease (VR-Headsets); wp_security_context_v1
+  (Sandbox-Metadaten); ext_pointer_warp (Nische)
 - Output-Management-Folgearbeiten: echtes DRM-Re-Modeset beim
   Apply (das Layout speichert den Modus; das atomare Modeset
   landet im Backend), Hotplug-Head-/Finished-Events, live

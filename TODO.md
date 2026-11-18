@@ -619,6 +619,14 @@
 ## Protocols and desktop
 
 - DMABUF screencopy path (SHM capture exists)
+- Protocol gaps for full coverage (audit 2025): adaptive
+  sync/VRR is refused in zwlr_output_manager validation —
+  no VRR path exists at all, notable for gaming loads;
+  wp_fifo_v1 + wp_commit_timing_v1 (frame pacing, newer
+  clients request it); ext_transient_seat_v1 (nested/VM
+  sessions); wp_color_manager_v1 (HDR — roadmap tier);
+  drm_lease (VR headsets); wp_security_context_v1 (sandbox
+  metadata); ext_pointer_warp (niche)
 - Output-management follow-ups: real DRM re-modeset on apply
   (the layout records the mode; the atomic modeset lands in
   the backend), hotplug head/finished events, live primary
