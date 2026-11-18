@@ -1,0 +1,42 @@
+[package]
+name = "odin"
+version = "0.0.9"
+edition = "2021"
+description = "Odin — a standalone Wayland compositor written in Rust"
+license = "GPL-3.0-or-later"
+
+[dependencies]
+# --- libc-layer bindings (allowed system-library shims, no compositor framework)
+wayland-server = "0.31"       # wire protocol implementation (wayland-rs)
+wayland-client = "0.31"       # nested backend: odin as a wayland client inside a host session
+wayland-protocols = { version = "0.32", features = ["client", "server", "unstable", "staging"] }
+wayland-protocols-wlr = { version = "0.3", features = ["client", "server"] }
+wayland-backend = { version = "0.3", features = ["server_system"] }
+drm = "0.14"                  # KMS/atomic ioctls
+gbm = "0.18"                  # buffer allocation
+khronos-egl = { version = "6", features = ["static"] } # EGL/GLES
+input = "0.9"                 # libinput
+udev = "0.9"
+xkbcommon = "0.9"
+calloop = { version = "0.14", features = ["executor"] }
+libseat = "0.2"               # seatd/logind session control
+x11rb = { version = "0.13", features = ["composite", "randr", "res", "xfixes", "damage"] }
+nix = { version = "0.30", features = ["fs", "signal", "poll", "term", "inotify"] }
+rustix = "1"
+libc = "0.2"
+
+# --- own stack
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1"
+signal-hook = "0.3"
+slotmap = "1"
+ash = "0.38"
+wayland-protocols-misc = { version = "0.3.12", features = ["client", "server"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+[build-dependencies]
+naga = { version = "30.0.1", features = ["glsl-in", "spv-out", "wgsl-in"] }

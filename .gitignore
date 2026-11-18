@@ -1,0 +1,11 @@
+# Rust build artifacts
+/target
+
+# Local VM test harness — disk images, ISOs, logs and QEMU
+# sockets are multi-GB and machine-specific, never committed.
+/vm
+
+# Editor/OS noise
+*.swp
+*~
+.DS_Store

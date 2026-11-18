@@ -1,0 +1,107 @@
+#!/bin/sh
+# Start odin from a display manager / VT.
+# Owns the seat via libseat (seatd or logind).
+#
+# Usage: startodin [session-command]
+#   The optional command runs once the compositor socket is live —
+#   passed through as `odin -S "<command>"` (the session-shell
+#   convention: a desktop shell or session launcher).
+#
+# stderr is teed into the persistent log — on a real VT stderr
+# goes nowhere and a silent crash strands the user on a black
+# screen with dead input.
+LOGDIR="${XDG_STATE_HOME:-$HOME/.local/state}/odin"
+mkdir -p "$LOGDIR"
+
+# --- Universal session environment -------------------------------------
+# Everything below is compositor-agnostic session plumbing every
+# wayland session needs — runtime dir, login-convention PATH,
+# session identity and toolkit defaults. Desktop-specific bits
+# (XDG_DATA_DIRS, config seeding) live in the desktop's own
+# session script that calls this one.
+
+# XDG_RUNTIME_DIR fallback for systems without systemd-logind.
+if [ -z "${XDG_RUNTIME_DIR}" ]; then
+    if [ -d "/run/user" ]; then
+        XDG_RUNTIME_DIR="/run/user/$(id -ru)"
+        export XDG_RUNTIME_DIR
+    else
+        XDG_RUNTIME_DIR="/tmp/${USER}-runtime"
+        mkdir -p -m 0700 "${XDG_RUNTIME_DIR}" 2>/dev/null
+        export XDG_RUNTIME_DIR
+    fi
+fi
+
+# Login shells add ~/bin and ~/.local/bin via ~/.profile, but
+# display managers start sessions through plain `sh` — apply the
+# same convention or user-installed binaries are unresolvable
+# for every program in the session.
+for _dir in "${HOME}/bin" "${HOME}/.local/bin"; do
+    if [ -d "${_dir}" ]; then
+        case ":${PATH}:" in
+            *":${_dir}:"*) ;;
+            *) PATH="${_dir}:${PATH}" ;;
+        esac
+    fi
+done
+export PATH
+unset _dir
+
+# Publish the login-convention PATH to the systemd user manager
+# and the D-Bus activation environment — without it autostart
+# units and dbus-activated services inherit the minimal default.
+systemctl --user import-environment PATH 2>/dev/null || true
+dbus-update-activation-environment --systemd PATH 2>/dev/null || true
+
+# Session identity — clients key their backend choice off it.
+XDG_SESSION_TYPE="wayland"
+export XDG_SESSION_TYPE
+if [ -z "${XDG_CURRENT_DESKTOP}" ]; then
+    XDG_CURRENT_DESKTOP="odin"
+    export XDG_CURRENT_DESKTOP
+fi
+
+# Toolkit defaults — Wayland first, keeping an x11 fallback where
+# the ecosystem still needs it. All overridable by the caller.
+if [ -z "${GDK_BACKEND}" ]; then
+    GDK_BACKEND="wayland,x11"
+    export GDK_BACKEND
+fi
+if [ -z "${QT_QPA_PLATFORM}" ]; then
+    QT_QPA_PLATFORM="wayland;xcb"
+    export QT_QPA_PLATFORM
+fi
+if [ -z "${CLUTTER_BACKEND}" ]; then
+    CLUTTER_BACKEND="wayland"
+    export CLUTTER_BACKEND
+fi
+if [ -z "${SDL_VIDEODRIVER}" ]; then
+    SDL_VIDEODRIVER="wayland"
+    export SDL_VIDEODRIVER
+fi
+if [ -z "${XDG_CONFIG_DIRS}" ]; then
+    XDG_CONFIG_DIRS="/etc/xdg"
+    export XDG_CONFIG_DIRS
+fi
+
+# A session bus is mandatory for desktop clients — without it
+# taskbars, portals and settings daemons error out and every
+# dbus-activated app stalls on its activation timeout. Wrap the
+# compositor itself so every spawned client inherits the bus.
+if [ -z "${DBUS_SESSION_BUS_ADDRESS}" ] && command -v dbus-run-session >/dev/null 2>&1; then
+    if [ -n "$1" ]; then
+        exec dbus-run-session -- /usr/bin/startodin "$1"
+    else
+        exec dbus-run-session -- /usr/bin/startodin
+    fi
+fi
+
+# WAYLAND_DISPLAY/DISPLAY reach the activation environment from
+# inside odin itself (session_env::publish) once the socket and
+# XWayland display are known — the compositor publishes them
+# itself once they exist.
+if [ -n "$1" ]; then
+    exec /usr/bin/odin -S "$1" 2>>"$LOGDIR/stderr.log"
+else
+    exec /usr/bin/odin 2>>"$LOGDIR/stderr.log"
+fi

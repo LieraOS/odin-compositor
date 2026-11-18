@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Odin
+Comment=Odin Wayland compositor session
+Exec=/usr/bin/startodin
+Type=Application
+DesktopNames=odin
