@@ -573,8 +573,12 @@
   `None` → the capture session reports `stopped`. So both
   paths fail GPU clients identically: per-output captures
   draw everything except dmabuf windows, per-toplevel
-  captures refuse them outright. dmabuf = every GL/
-  XWayland-glamor client. The dump-frame path is unaffected
+  captures refuse them outright. dmabuf = every GPU-
+  accelerated client, Wayland-native as much as XWayland/
+  glamor — verified with a GTK4 file manager connecting
+  natively (GDK_BACKEND=wayland): its GSK GL/Vulkan renderer
+  submits dmabuf, so it stays invisible while shm-only GTK3
+  apps capture fine. The dump-frame path is unaffected
   because it reads the already-rendered frame, proving the
   pixels exist — the capture path just never asks the GPU
   for them. Fixes owed: (a) resolve toplevel capture rects

@@ -625,8 +625,13 @@
   scheitern also identisch an GPU-Clients: Per-Output-
   Captures zeichnen alles außer dmabuf-Fenstern, Per-
   Toplevel-Captures verweigern sie ganz. dmabuf = jeder
-  GL-/XWayland-glamor-Client. Der dump-frame-Pfad ist
-  unbetroffen — er liest den bereits gerenderten Frame, die
+  GPU-beschleunigte Client, Wayland-nativ genauso wie
+  XWayland/glamor — verifiziert an einem GTK4-Dateimanager
+  mit nativer Verbindung (GDK_BACKEND=wayland): dessen
+  GSK-GL/Vulkan-Renderer schickt dmabuf, bleibt also
+  unsichtbar, während shm-only-GTK3-Apps sauber capturen.
+  Der dump-frame-Pfad ist unbetroffen — er liest den
+  bereits gerenderten Frame, die
   Pixel existieren also; der Capture-Pfad fragt die GPU nur
   nie danach. Geschuldete Fixes: (a) Toplevel-Capture-Rects
   aus `pos`+`win_geom` auflösen (buffertyp-unabhängig),
